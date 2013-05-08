@@ -1,37 +1,50 @@
-﻿(function ($) {
+(function ($) {
     $.fn.extend({
         gips: function (options) {
-            var settings = $.extend({ delay: 500, autoHide: false, pause: 5000, animationSpeed: 500, placement: 'top', theme: 'purple', imagePath: 'images/close.png', text: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et.' }, options);
+            var settings = $.extend({
+                    action: 'focusin',
+                    delay: 300,
+                    autoHide: true,
+                    pause: 300,
+                    animationSpeed: 300,
+                    placement: 'top',
+                    theme: 'green',
+                    text: '' },
+                options);
             return this.each(function () {
-                var control = $(this);
-                var iconDirection = 'top';
-                if (settings.placement == 'top')
-                    iconDirection = 'bottom';
-                if (settings.placement == 'bottom')
-                    iconDirection = 'top';
-                if (settings.placement == 'left')
-                    iconDirection = 'right';
-                if (settings.placement == 'right')
-                    iconDirection = 'left';
+                var actionOut = settings.action == 'focusin' ? 'focusout' : 'mouseleave';
+                if(settings.text.length == 0){
+                    settings.text = $(this).siblings('.gips_text').html();
+                }
 
-                var closebtn = '';
-                if (!settings.autoHide)
-                    closebtn = '<img src="' + settings.imagePath + '" class="gips-close" alt="close" />';
+                var control = $(this),
+                    iconDirection = 'top';
+                switch(settings.placement){
+                    case "top":
+                        iconDirection = 'bottom';
+                        break;
+                    case "left":
+                        iconDirection = 'right';
+                        break;
+                    case "right":
+                        iconDirection = 'left';
+                        break;
+                }
                 var toolTipContainer = $('<div class="gips-container"><div class="gips-body ' + settings.theme + '">' + settings.text + '' +
-                                        '' + closebtn + '</div><div class="gips-icon gips-icon-' + iconDirection + ' ' + settings.theme + '"></div></div>');
+                        '</div><div class="gips-icon gips-icon-' + iconDirection + ' ' + settings.theme + '"></div></div>');
 
                 control.before(toolTipContainer);
-                var delay = settings.delay;
-                var toolTip = toolTipContainer;
+                var delay = settings.delay,
+                    toolTip = toolTipContainer;
                 toolTip.css({display:'none'}).find('div').css({ display: 'none', opacity: 0 });
-                var toolTipBody = $('.gips-body', toolTipContainer);
-                var toolTipIcon = $('.gips-icon', toolTipContainer);
-                var placement = settings.placement;
-                var interval;
-                control.mouseover(function () {
-                    var position = $(this).offset();
-                    var left = position.left;
-                    var top = position.top;
+                var toolTipBody = $('.gips-body', toolTipContainer),
+                    toolTipIcon = $('.gips-icon', toolTipContainer),
+                    placement = settings.placement,
+                    interval;
+                control.on(settings.action, function(){
+                    var position = $(this).position(),
+                        left = position.left,
+                        top = position.top;
                     if (placement == 'top') {
                         top -= toolTip.height();
                         var iconTop = toolTip.height();
@@ -58,27 +71,27 @@
                     interval = setTimeout(function () {
                         showToolTip(toolTip);
                     }, delay);
-                }).mouseout(function () {
+                }).on(actionOut, function () {
                     if (!settings.autoHide) {
                         clearTimeout(interval);
                     }
-                }).keydown(function () {
-                    clearTimeout(interval);
-                });
-
-                $('.gips-close', toolTipContainer).click(function () {
-                    hideToolTip(toolTip);
                 });
 
                 function showToolTip(toolTip) {
                     //toolTip.fadeIn('slow');
-                    toolTip.css({ display: '' }).find('div').css('display', '').stop(false, true).animate({ opacity: 1 }, settings.animationSpeed, function () {
-                        if (settings.autoHide) {
-                            setTimeout(function () {
-                                hideToolTip(toolTip);
-                            }, settings.pause);
-                        }
-                    });
+                    toolTip.css({ display: '' })
+                        .find('div')
+                        .css('display', '')
+                        .stop(false, true)
+                        .animate({ opacity: 1 }, settings.animationSpeed, function () {
+                            if (settings.autoHide) {
+                                control.on(actionOut,function(){
+                                    setTimeout(function () {
+                                        hideToolTip(toolTip);
+                                    }, settings.pause);
+                                });
+                            }
+                        });
                 }
                 function hideToolTip(toolTip) {
                     //                    toolTip.fadeOut('slow');
